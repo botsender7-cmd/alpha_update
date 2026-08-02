@@ -21,7 +21,7 @@ from mutagen.id3 import APIC, TPE1, TALB, TIT2
 
 MAX_UPLOAD_MB   = int(os.environ.get("MAX_UPLOAD_MB", "100"))
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
-CLEANUP_TTL_SECONDS = int(os.environ.get("CLEANUP_TTL_SECONDS", str(30 * 60))  # 30 min
+CLEANUP_TTL_SECONDS = int(os.environ.get("CLEANUP_TTL_SECONDS", str(30 * 60)))  # 30 min
 CLEANUP_INTERVAL_SECONDS = int(os.environ.get("CLEANUP_INTERVAL_SECONDS", "300"))  # 5 min
 
 ARTIST_NAME = os.environ.get("ARTIST_NAME", "@king75683")
