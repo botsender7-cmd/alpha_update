@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio Modifier</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial;
+}
+
+body{
+    background:#0f0f0f;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:30px;
+}
+
+.container{
+    width:450px;
+    background:#181818;
+    border:2px solid #00ff88;
+    border-radius:25px;
+    padding:30px;
+}
+
+h1{
+    color:#00ff88;
+    text-align:center;
+    margin-bottom:25px;
+}
+
+.preview{
+    width:180px;
+    height:180px;
+    margin:auto;
+    border-radius:20px;
+    overflow:hidden;
+    border:3px solid #00ff88;
+}
+
+.preview img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.file-box{
+    margin-top:25px;
+}
+
+label{
+    color:white;
+    display:block;
+    margin-bottom:10px;
+}
+
+input[type="file"]{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    background:#242424;
+    color:white;
+}
+
+/* ---- BUTTONS ROW ---- */
+.btn-row{
+    display:flex;
+    gap:10px;
+    margin-top:25px;
+}
+
+.btn-modify{
+    flex:1;
+    padding:16px;
+    border:none;
+    border-radius:15px;
+    background:#00ff88;
+    color:black;
+    font-size:17px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:opacity 0.2s;
+}
+
+.btn-modify:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+}
+
+/* Download All button — hidden until files done */
+.btn-dl-all{
+    padding:16px 18px;
+    border:none;
+    border-radius:15px;
+    background:#005533;
+    color:#00ff88;
+    font-size:15px;
+    font-weight:bold;
+    cursor:pointer;
+    white-space:nowrap;
+    display:none;
+    transition:background 0.2s;
+    border:1.5px solid #00ff88;
+}
+
+.btn-dl-all:hover{
+    background:#007744;
+}
+
+/* ---- SELECT ALL ROW ---- */
+.select-row{
+    display:none;
+    align-items:center;
+    gap:10px;
+    margin-top:18px;
+    padding:10px 14px;
+    background:#242424;
+    border-radius:12px;
+}
+
+.select-row label{
+    color:#00ff88;
+    font-size:13px;
+    margin:0;
+    cursor:pointer;
+    flex:1;
+}
+
+.select-row input[type="checkbox"]{
+    width:18px;
+    height:18px;
+    accent-color:#00ff88;
+    cursor:pointer;
+    flex-shrink:0;
+}
+
+/* ---- STATUS ---- */
+.status{
+    text-align:center;
+    color:#00ff88;
+    margin-top:14px;
+    font-size:14px;
+    min-height:20px;
+}
+
+/* ---- FILE LIST ---- */
+.file-list{
+    margin-top:14px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+/* ---- SINGLE FILE CARD ---- */
+.file-card{
+    background:#2a2a2a;
+    border-radius:15px;
+    padding:12px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    border:1.5px solid #333;
+    transition:border-color 0.3s, background 0.3s;
+}
+
+.file-card.processing{
+    border-color:#00ff88;
+    background:#1a2e22;
+}
+
+.file-card.done{
+    border-color:#00aa55;
+    background:#1a2a1e;
+}
+
+.file-card.selected{
+    border-color:#00ff88 !important;
+    background:#1a2e22 !important;
+}
+
+.file-card.error{
+    border-color:#ff4444;
+    background:#2a1a1a;
+}
+
+/* checkbox on card */
+.card-check{
+    width:17px;
+    height:17px;
+    accent-color:#00ff88;
+    cursor:pointer;
+    flex-shrink:0;
+    display:none;
+}
+
+.file-card.done .card-check{ display:block; }
+
+/* failed checkbox on card */
+.card-fail-check{
+    width:17px;
+    height:17px;
+    accent-color:#ff4444;
+    cursor:pointer;
+    flex-shrink:0;
+    display:none;
+}
+
+.file-card.error .card-fail-check{ display:block; }
+
+/* icon */
+.file-icon{
+    font-size:20px;
+    flex-shrink:0;
+    width:26px;
+    text-align:center;
+}
+
+/* spinner */
+.spinner{
+    width:20px;
+    height:20px;
+    border:3px solid #003a1a;
+    border-top:3px solid #00ff88;
+    border-radius:50%;
+    animation:spin 0.75s linear infinite;
+    flex-shrink:0;
+    display:none;
+}
+
+.file-card.processing .spinner{ display:block; }
+
+@keyframes spin{
+    to{ transform:rotate(360deg); }
+}
+
+/* text */
+.file-info{
+    flex:1;
+    min-width:0;
+}
+
+.file-name{
+    color:#aaa;
+    font-size:11px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.file-name-new{
+    color:#00ff88;
+    font-size:12px;
+    margin-top:3px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    display:none;
+    font-weight:bold;
+}
+
+.file-card.done .file-name-new{ display:block; }
+
+.file-state{
+    font-size:11px;
+    margin-top:3px;
+    color:#555;
+}
+
+.file-card.processing .file-state{ color:#00ff88; }
+.file-card.done        .file-state{ color:#00aa55; }
+.file-card.error       .file-state{ color:#ff4444; }
+
+/* individual download */
+.dl-btn{
+    background:#00ff88;
+    color:black;
+    text-decoration:none;
+    padding:7px 11px;
+    border-radius:9px;
+    font-weight:bold;
+    font-size:11px;
+    white-space:nowrap;
+    flex-shrink:0;
+    display:none;
+}
+
+.file-card.done .dl-btn{ display:block; }
+
+/* retry button */
+.retry-btn{
+    background:#ff4444;
+    color:white;
+    border:none;
+    padding:7px 11px;
+    border-radius:9px;
+    font-weight:bold;
+    font-size:11px;
+    white-space:nowrap;
+    flex-shrink:0;
+    cursor:pointer;
+    display:none;
+}
+
+.file-card.error .retry-btn{ display:block; }
+
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Audio Modifier</h1>
+
+    <div class="preview">
+        <img src="/static/cover.jpg">
+    </div>
+
+    <div class="file-box">
+        <label>Select Audio Files</label>
+        <input type="file" id="audio" accept="audio/*" multiple>
+    </div>
+
+    <!-- MODIFY + DOWNLOAD ALL buttons -->
+    <div class="btn-row">
+        <button class="btn-modify" id="btn" onclick="uploadAudio()">MODIFY AUDIO</button>
+        <button class="btn-dl-all" id="btnDlAll" onclick="downloadSelected()">⬇ Download Selected</button>
+        <button class="btn-retry-sel" id="btnRetrySel" onclick="retrySelected()" style="display:none; padding:16px 14px; border:none; border-radius:15px; background:#330000; color:#ff6666; font-size:14px; font-weight:bold; cursor:pointer; white-space:nowrap; border:1.5px solid #ff4444;">↺ Retry Failed</button>
+    </div>
+
+    <!-- Select All row -->
+    <div class="select-row" id="selectRow">
+        <input type="checkbox" id="chkAll" onchange="toggleSelectAll(this.checked)">
+        <label for="chkAll">Select All Done Files</label>
+        <span id="selCount" style="color:#888;font-size:12px;">0 selected</span>
+    </div>
+
+    <!-- Select Failed row -->
+    <div class="select-row" id="selectFailedRow" style="display:none; margin-top:8px; border:1px solid #ff4444; background:#1a0a0a;">
+        <input type="checkbox" id="chkFailed" onchange="toggleSelectFailed(this.checked)">
+        <label for="chkFailed" style="color:#ff6666;">Select All Failed Files</label>
+        <span id="failCount" style="color:#888;font-size:12px;">0 failed</span>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <div class="file-list" id="fileList"></div>
+
+</div>
+
+<script>
+
+// stores { url, name } for each done file, indexed by card index
+const doneFiles = {};
+
+// stores File objects by index for retry
+const allFiles = {};
+
+// -----------------------------------------------
+// TOGGLE SELECT ALL FAILED
+// -----------------------------------------------
+function toggleSelectFailed(checked){
+    document.querySelectorAll(".file-card.error .card-fail-check").forEach(cb => {
+        cb.checked = checked;
+        cb.closest(".file-card").classList.toggle("selected", checked);
+    });
+    updateFailCount();
+}
+
+// -----------------------------------------------
+// UPDATE FAILED COUNT LABEL
+// -----------------------------------------------
+function updateFailCount(){
+    const total = document.querySelectorAll(".file-card.error .card-fail-check:checked").length;
+    document.getElementById("failCount").innerText = `${total} selected`;
+}
+
+// -----------------------------------------------
+// TOGGLE SELECT ALL
+// -----------------------------------------------
+function toggleSelectAll(checked){
+    document.querySelectorAll(".card-check").forEach(cb => {
+        cb.checked = checked;
+        cb.closest(".file-card").classList.toggle("selected", checked);
+    });
+    updateSelCount();
+}
+
+// -----------------------------------------------
+// UPDATE SELECTED COUNT LABEL
+// -----------------------------------------------
+function updateSelCount(){
+    const total = document.querySelectorAll(".card-check:checked").length;
+    document.getElementById("selCount").innerText = `${total} selected`;
+}
+
+// -----------------------------------------------
+// DOWNLOAD SELECTED FILES
+// -----------------------------------------------
+function downloadSelected(){
+    const checked = document.querySelectorAll(".card-check:checked");
+    if(checked.length === 0){ alert("Koi file select nahi ki!"); return; }
+
+    checked.forEach((cb, idx) => {
+        const i   = parseInt(cb.dataset.index);
+        const f   = doneFiles[i];
+        if(!f) return;
+        setTimeout(() => {
+            const a = document.createElement("a");
+            a.href     = f.url;
+            a.download = f.name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }, idx * 300);
+    });
+}
+
+// -----------------------------------------------
+// SHOW / HIDE BOTTOM BAR
+// -----------------------------------------------
+function refreshBottomBar(){
+    const doneCount  = Object.keys(doneFiles).length;
+    const errorCards = document.querySelectorAll(".file-card.error").length;
+    const btnDlAll   = document.getElementById("btnDlAll");
+    const selectRow  = document.getElementById("selectRow");
+    const failedRow  = document.getElementById("selectFailedRow");
+    const btnRetry   = document.getElementById("btnRetrySel");
+
+    if(doneCount > 0){
+        btnDlAll.style.display  = "block";
+        selectRow.style.display = "flex";
+    }
+    if(errorCards > 0){
+        failedRow.style.display  = "flex";
+        btnRetry.style.display   = "block";
+        document.getElementById("failCount").innerText = `${errorCards} failed`;
+    } else {
+        failedRow.style.display = "none";
+        btnRetry.style.display  = "none";
+    }
+}
+
+// -----------------------------------------------
+// RETRY ALL SELECTED FAILED FILES
+// -----------------------------------------------
+async function retrySelected(){
+    const checked = document.querySelectorAll(".file-card.error .card-fail-check:checked");
+    if(checked.length === 0){ alert("Koi failed file select nahi ki!"); return; }
+    for(const cb of checked){
+        const i = parseInt(cb.dataset.index);
+        await retryFile(i);
+    }
+    refreshBottomBar();
+}
+
+// -----------------------------------------------
+// PROCESS A SINGLE FILE  (shared by upload + retry)
+// -----------------------------------------------
+async function processCard(i, fileObj){
+
+    const card      = document.getElementById(`card-${i}`);
+    const stateEl   = document.getElementById(`state-${i}`);
+    const newNameEl = document.getElementById(`new-name-${i}`);
+    const dlBtn     = document.getElementById(`dl-${i}`);
+    const retryBtn  = document.getElementById(`retry-${i}`);
+    const iconEl    = card.querySelector(".file-icon");
+    const checkbox  = card.querySelector(".card-check");
+
+    // Reset to processing state
+    card.className    = "file-card processing";
+    iconEl.innerText  = "⏳";
+    stateEl.innerText = "Processing...";
+    retryBtn.style.display = ""; // let CSS handle via .file-card.error .retry-btn
+
+    card.scrollIntoView({ behavior:"smooth", block:"nearest" });
+
+    try{
+        const formData = new FormData();
+        formData.append("audio", fileObj);
+
+        const response = await fetch("/upload_one", {
+            method: "POST",
+            body:   formData
+        });
+
+        const result = await response.json();
+        if(result.error) throw new Error(result.error);
+
+        // Success
+        doneFiles[i] = { url: result.url, name: result.name };
+
+        card.className      = "file-card done";
+        iconEl.innerText    = "✅";
+        stateEl.innerText   = "Done";
+        newNameEl.innerText = "→ " + result.name;
+        dlBtn.href          = result.url;
+        dlBtn.download      = result.name;
+
+        // Show actual output size + any resize failure/overshoot reason.
+        // Previously these fields were returned by the backend and silently
+        // dropped here, so a failed resize looked identical to a success.
+        const sizeMB = (result.size_bytes / (1024*1024)).toFixed(2);
+        let statusLine = `Done — ${sizeMB} MB`;
+        if (result.resize_warning) {
+            card.classList.add("resize-warning");
+            iconEl.innerText = "⚠️";
+            statusLine = `⚠ ${sizeMB} MB (not resized: ${result.resize_warning})`;
+        }
+        stateEl.innerText = statusLine;
+        stateEl.title = result.resize_warning || "";
+
+        // Auto-check this card
+        checkbox.checked = true;
+        card.classList.add("selected");
+        updateSelCount();
+        refreshBottomBar();
+
+        return true;
+
+    }catch(err){
+
+        // Remove from done if it was previously done
+        delete doneFiles[i];
+
+        card.className    = "file-card error";
+        iconEl.innerText  = "❌";
+        stateEl.innerText = "Failed: " + err.message;
+
+        return false;
+    }
+}
+
+// -----------------------------------------------
+// RETRY A SINGLE FAILED FILE
+// -----------------------------------------------
+async function retryFile(i){
+    const fileObj = allFiles[i];
+    if(!fileObj) return;
+    await processCard(i, fileObj);
+    refreshBottomBar();
+}
+
+// -----------------------------------------------
+// MAIN UPLOAD FUNCTION
+// -----------------------------------------------
+async function uploadAudio(){
+
+    const files    = document.getElementById("audio").files;
+    const btn      = document.getElementById("btn");
+    const status   = document.getElementById("status");
+    const fileList = document.getElementById("fileList");
+    const btnDlAll = document.getElementById("btnDlAll");
+    const selectRow= document.getElementById("selectRow");
+
+    if(files.length === 0){ alert("Select Audio Files"); return; }
+
+    btn.disabled             = true;
+    fileList.innerHTML       = "";
+    btnDlAll.style.display   = "none";
+    selectRow.style.display  = "none";
+    status.innerText         = `0 / ${files.length} processing...`;
+
+    // Clear old state
+    Object.keys(doneFiles).forEach(k => delete doneFiles[k]);
+    Object.keys(allFiles ).forEach(k => delete allFiles[k]);
+
+    let doneCount  = 0;
+    let errorCount = 0;
+
+    // ---- Build all cards upfront ----
+    for(let i = 0; i < files.length; i++){
+
+        allFiles[i] = files[i]; // save for retry
+
+        const card = document.createElement("div");
+        card.className = "file-card";
+        card.id = `card-${i}`;
+
+        card.innerHTML = `
+            <input type="checkbox" class="card-check" data-index="${i}"
+                   onchange="
+                       this.closest('.file-card').classList.toggle('selected', this.checked);
+                       updateSelCount();
+                   ">
+            <input type="checkbox" class="card-fail-check" data-index="${i}"
+                   onchange="
+                       this.closest('.file-card').classList.toggle('selected', this.checked);
+                       updateFailCount();
+                   ">
+            <div class="file-icon">🎵</div>
+            <div class="file-info">
+                <div class="file-name">${files[i].name}</div>
+                <div class="file-name-new" id="new-name-${i}"></div>
+                <div class="file-state" id="state-${i}">Waiting...</div>
+            </div>
+            <div class="spinner" id="spin-${i}"></div>
+            <button class="retry-btn" id="retry-${i}" onclick="retryFile(${i})">↺ Retry</button>
+            <a class="dl-btn" id="dl-${i}" href="#" download>↓</a>
+        `;
+
+        fileList.appendChild(card);
+    }
+
+    // ---- Process one by one ----
+    for(let i = 0; i < files.length; i++){
+
+        status.innerText = `${i + 1} / ${files.length} processing...`;
+        const ok = await processCard(i, files[i]);
+        if(ok) doneCount++; else errorCount++;
+    }
+
+    // ---- Final summary ----
+    status.innerText = errorCount === 0
+        ? `✓ All ${doneCount} file(s) done!`
+        : `Done: ${doneCount} ✓   Failed: ${errorCount} ✗  (failed files me Retry dabao)`;
+
+    btn.disabled = false;
+    refreshBottomBar();
+
+    if(doneCount > 0){
+        document.getElementById("chkAll").checked = true;
+        toggleSelectAll(true);
+    }
+}
+
+</script>
+
+</body>
+</html>
+
+<!-- index_updated generated; apply retry/select features manually if needed -->
