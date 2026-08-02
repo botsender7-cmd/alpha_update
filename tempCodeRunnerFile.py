@@ -1,0 +1,1 @@
+CLEANUP_TTL_SECONDS = int(os.environ.get("CLEANUP_TTL_SECONDS", str(30 * 60)))  
