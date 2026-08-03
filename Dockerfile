@@ -17,13 +17,13 @@ COPY . .
 RUN useradd -m appuser
 USER appuser
 
-ENV PORT=5001 \
+ENV PORT=5000 \
     MAX_UPLOAD_MB=100 \
     CLEANUP_TTL_SECONDS=1800 \
     CLEANUP_INTERVAL_SECONDS=300 \
     FLASK_DEBUG=false
 
-EXPOSE 5001
+EXPOSE 5000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import urllib.request as u, os; u.urlopen('http://127.0.0.1:' + os.environ['PORT'] + '/health')" || exit 1
